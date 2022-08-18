@@ -1,0 +1,50 @@
+﻿@page "/"
+
+<PageTitle>Index</PageTitle>
+
+<h5>This component should allow a single line of rich text to be edited. 
+    It is a div with "contenteditable" set to true. All keydown events are monitored. 
+    When user presses 'enter' key, the contents of the div are sent via EventCallback to the parent for processing.</h5>
+
+<h6>Example with static dotNetHelper.</h6>
+
+<label>It does not work because the same dotNetHelper instance is shared across different instances of the same component!</label>
+
+<div class="border p-2 m-2">
+    Editable div with static dotNetHelper instance #1
+    <ContentDivWithStaticHelper Content="@staticHelperContent1" Css="fs-5 border px-1" OnContentCommitted="OnFirstChanged" />
+</div>
+
+<div class="border p-2 m-2">
+    Editable div with static dotNetHelper instance #2
+    <ContentDivWithStaticHelper Content="@staticHelperContent2" Css="fs-5 border px-1" OnContentCommitted="OnSecondChanged" />
+</div>
+
+<div class="border p-2 m-2">
+    Value in #1 @staticHelperContent1
+    <br/>
+    Value in #2 @staticHelperContent2
+</div>
+
+<label>Always the last instance of this kind gets updated! This is because the dotNetHelper is static and JS keeps invoking the instance associated with the component that registered the last.</label>
+
+
+
+
+@code{
+    string staticHelperContent1 = "Edit to change content in static helper #1";
+    string staticHelperContent2 = "Edit to change content in static helper #2";
+
+    async Task OnFirstChanged(string value){
+        staticHelperContent1 = value;
+    }
+
+    async Task OnSecondChanged(string value)
+    {
+        staticHelperContent2 = value;
+    }
+
+}
+
+
+

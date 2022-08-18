@@ -1,0 +1,95 @@
+﻿@using Microsoft.JSInterop
+@implements IAsyncDisposable
+@implements IDisposable
+@inject IJSRuntime JS;
+
+<div class="position-relative">
+    <div onblur="ContentDivWithStaticHelper.processBlur()" onkeydown="ContentDivWithStaticHelper.processKeyDown(event)" class="@Css" @ref="editableDiv" contenteditable="@(!Readonly)">
+        @Content
+    </div>
+</div>
+
+
+
+
+
+@code {
+
+    [Parameter]
+    public bool Readonly { get; set; }
+
+    [Parameter]
+    public string Content { get; set; }
+
+    [Parameter]
+    public string Css { get; set; }
+
+
+    [Parameter]
+    public EventCallback<string> OnContentCommitted { get; set; }
+
+    ElementReference editableDiv;
+    private bool disposedValue;
+    private bool editMode;
+    private DotNetObjectReference<ContentDivWithStaticHelper>? objRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            objRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("ContentDivWithStaticHelper.setDotNetHelper", objRef);
+        }
+    }
+
+    [JSInvokable]
+    public async Task SaveContentRequested(string content)
+    {
+        await OnContentCommitted.InvokeAsync(content);
+        editMode = false;
+
+        //StateHasChanged();
+    }
+    async Task EnterEditMode() { editMode = true; await editableDiv.FocusAsync(); }
+
+    [JSInvokable]
+    public async Task DiscardContentRequested()
+    {
+        await JS.InvokeVoidAsync("ContentDivWithStaticHelper.setPreviousContent", editableDiv, Content);
+        editMode = false;
+        //StateHasChanged();
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                objRef?.Dispose();
+            }
+
+            // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+            // TODO: set large fields to null
+            disposedValue = true;
+        }
+    }
+
+    // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+    // ~someclass()
+    // {
+    //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+    //     Dispose(disposing: false);
+    // }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+    public ValueTask DisposeAsync()
+    {
+        return JS.InvokeVoidAsync("ContentDivWithStaticHelper.removeDotNetHelper");
+    }
+}
